@@ -6,12 +6,15 @@
     "permissions": [
         "activeTab"
     ],
+    "background": {
+        "service_worker": "./background.js"
+    },
     "content_scripts": [{
-        "matches": [
-            "https://www.powerlanguage.co.uk/wordle/*"
-        ],
+          "matches": [
+                "https://www.powerlanguage.co.uk/wordle/*",
+                "https://www.nytimes.com/games/wordle/*"
+            ],
         "js": [
-            "./utility/wordlist.js",
             "./util/solver.js"
         ]
     }]
