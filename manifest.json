@@ -33,7 +33,7 @@
     ],
     "web_accessible_resources": [
         {
-            "resources": ["util/wordlist.txt"],
+            "resources": ["util/newlist.txt"],
             "matches": ["<all_urls>"]
         }
     ],

@@ -2,7 +2,7 @@ if (!window.hasRunWordleSolver) {
     window.hasRunWordleSolver = true;
 
     (async () => {
-        const WORDLIST_URL = chrome.runtime.getURL('util/wordlist.txt');
+        const WORDLIST_URL = chrome.runtime.getURL('util/newlist.txt');
 
         const loadWordList = async () => {
             try {
@@ -71,7 +71,7 @@ if (!window.hasRunWordleSolver) {
                 }
 
                 for (const letter of absentLetters) {
-                    if (word.includes(letter)) {
+                    if (word.includes(letter) && !correctLetters.has(word.indexOf(letter))) {
                         return false;
                     }
                 }
@@ -111,6 +111,18 @@ if (!window.hasRunWordleSolver) {
             }
         };
 
+        const findNextGuess = (wordList, usedLetters) => {
+            const nextWords = wordList.filter(word => {
+                for (const letter of word) {
+                    if (usedLetters.has(letter)) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+            return nextWords.length > 0 ? nextWords[0] : wordList[0];
+        };
+
         const solveWordle = async () => {
             let wordList = await loadWordList();
             if (wordList.length === 0) {
@@ -118,9 +130,11 @@ if (!window.hasRunWordleSolver) {
                 return;
             }
 
-            let initialGuess = "salet";
+            let initialGuess = "crane";
             await inputGuess(initialGuess);
             await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for feedback
+
+            let usedLetters = new Set();
 
             while (true) {
                 const feedback = getFeedback();
@@ -134,12 +148,20 @@ if (!window.hasRunWordleSolver) {
                 wordList = filterWordList(wordList, feedback);
                 console.log('Filtered word list:', wordList);
 
+                feedback.forEach(row => {
+                    row.forEach(({ letter, evaluation }) => {
+                        if (evaluation === 'correct' || evaluation === 'present' || evaluation === 'absent') {
+                            usedLetters.add(letter);
+                        }
+                    });
+                });
+
                 if (wordList.length === 0) {
                     console.error('No possible words left.');
                     return;
                 }
 
-                const guess = wordList[0]; // Select the first word from the filtered list
+                const guess = findNextGuess(wordList, usedLetters);
                 await inputGuess(guess);
                 await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for feedback
             }
