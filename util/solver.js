@@ -23,38 +23,81 @@ if (!window.hasRunWordleSolver) {
             const feedback = [];
             rows.forEach(row => {
                 const tiles = row.querySelectorAll('[class*="Tile-module_tile"]');
+                const rowFeedback = [];
                 tiles.forEach(tile => {
-                    feedback.push({
-                        letter: tile.textContent,
+                    rowFeedback.push({
+                        letter: tile.textContent.trim(),
                         evaluation: tile.getAttribute('data-state')
                     });
                 });
+                if (rowFeedback.length > 0) feedback.push(rowFeedback);
             });
-            return feedback.slice(-5); // Get feedback for the last guess
+            return feedback;
         };
 
         const filterWordList = (wordList, feedback) => {
-            // Filter word list based on feedback
-            feedback.forEach(({ letter, evaluation }, index) => {
-                if (evaluation === 'correct') {
-                    wordList = wordList.filter(word => word[index] === letter);
-                } else if (evaluation === 'present') {
-                    wordList = wordList.filter(word => word.includes(letter) && word[index] !== letter);
-                } else {
-                    wordList = wordList.filter(word => !word.includes(letter));
-                }
+            const correctLetters = new Map();
+            const presentLetters = new Set();
+            const absentLetters = new Set();
+            const incorrectPositionLetters = new Map();
+
+            feedback.forEach(row => {
+                row.forEach(({ letter, evaluation }, index) => {
+                    if (evaluation === 'correct') {
+                        correctLetters.set(index, letter);
+                    } else if (evaluation === 'present') {
+                        presentLetters.add(letter);
+                        if (!incorrectPositionLetters.has(letter)) {
+                            incorrectPositionLetters.set(letter, new Set());
+                        }
+                        incorrectPositionLetters.get(letter).add(index);
+                    } else if (evaluation === 'absent') {
+                        absentLetters.add(letter);
+                    }
+                });
             });
-            return wordList;
+
+            return wordList.filter(word => {
+                for (const [index, letter] of correctLetters.entries()) {
+                    if (word[index] !== letter) {
+                        return false;
+                    }
+                }
+
+                for (const letter of presentLetters) {
+                    if (!word.includes(letter)) {
+                        return false;
+                    }
+                }
+
+                for (const letter of absentLetters) {
+                    if (word.includes(letter)) {
+                        return false;
+                    }
+                }
+
+                for (const [letter, indices] of incorrectPositionLetters.entries()) {
+                    for (const index of indices) {
+                        if (word[index] === letter) {
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
+            });
         };
 
         const inputGuess = async (word) => {
-            const keyboard = document.querySelector('[class*="Game-keyboard"]');
+            const keyboard = document.querySelector('[class*="Keyboard-module_keyboard"]');
             if (keyboard) {
                 for (const char of word) {
                     const keyButton = keyboard.querySelector(`[data-key="${char}"]`);
                     if (keyButton) {
                         keyButton.click();
                         await new Promise(resolve => setTimeout(resolve, 100)); // Small delay between key presses
+                    } else {
+                        console.error(`Key button for '${char}' not found`);
                     }
                 }
                 const enterButton = keyboard.querySelector('[data-key="↵"]');
@@ -74,18 +117,39 @@ if (!window.hasRunWordleSolver) {
                 console.error('Word list is empty or could not be loaded.');
                 return;
             }
-            while (wordList.length > 1) {
-                const guess = wordList[Math.floor(Math.random() * wordList.length)];
+
+            let initialGuess = "salet";
+            await inputGuess(initialGuess);
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for feedback
+
+            while (true) {
+                const feedback = getFeedback();
+                console.log('Feedback:', feedback);
+
+                if (feedback[feedback.length - 1].every(({ evaluation }) => evaluation === 'correct')) {
+                    console.log('Wordle solved!');
+                    return;
+                }
+
+                wordList = filterWordList(wordList, feedback);
+                console.log('Filtered word list:', wordList);
+
+                if (wordList.length === 0) {
+                    console.error('No possible words left.');
+                    return;
+                }
+
+                const guess = wordList[0]; // Select the first word from the filtered list
                 await inputGuess(guess);
                 await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for feedback
-                const feedback = getFeedback();
-                wordList = filterWordList(wordList, feedback);
-            }
-            if (wordList.length === 1) {
-                await inputGuess(wordList[0]);
             }
         };
 
-        solveWordle();
+        // Listen for messages from the popup
+        chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+            if (request.action === 'solveWordle') {
+                solveWordle();
+            }
+        });
     })();
 }

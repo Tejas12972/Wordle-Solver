@@ -1,12 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('solve').addEventListener('click', solveWordle);
-});
-
-const solveWordle = () => {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        chrome.scripting.executeScript({
-            target: { tabId: tabs[0].id },
-            files: ['util/solver.js']
+    const solveButton = document.getElementById('solveButton');
+    if (solveButton) {
+        solveButton.addEventListener('click', () => {
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                chrome.tabs.sendMessage(tabs[0].id, { action: 'solveWordle' });
+            });
         });
-    });
-};
+    }
+});
