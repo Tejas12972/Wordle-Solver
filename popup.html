@@ -1,13 +1,14 @@
 <!DOCTYPE html>
-<html>
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *">
+<html lang="en">
 <head>
-    <link rel="stylesheet" href="./css/popup.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/popup.css">
+    <title>Wordle Solver</title>
 </head>
-
 <body>
-    <div id="answer_xfg"></div>
-    <script> src = "./util/popup.js"</script>
+    <button id="solve">Solve Wordle</button>
+    <div id="results"></div>
+    <script src="util/popup.js" type="module"></script>
 </body>
-
 </html>
