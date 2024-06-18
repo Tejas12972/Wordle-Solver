@@ -27,7 +27,8 @@
                 "https://www.nytimes.com/games/wordle/*"
             ],
             "js": [
-                "util/solver.js"
+                "util/solver.js",
+                "util/github.js"
             ]
         }
     ],
