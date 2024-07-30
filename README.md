@@ -10,7 +10,7 @@ A google chrome extension that can solve the [wordle](https://www.nytimes.com/ga
 
 ## Installation
 
-Install from [chrome web store](soon!)
+Install from [chrome web store](https://chromewebstore.google.com/detail/wordle-solver/llhbgnfbaepkdanmnbkdipgkgibhlokd)
 
 **Run locally**
 
